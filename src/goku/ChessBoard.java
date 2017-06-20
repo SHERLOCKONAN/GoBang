@@ -31,6 +31,7 @@ public class ChessBoard extends JPanel implements MouseListener {
    boolean gameOver=false;//游戏是否结束  
    int chessCount;//当前棋盘棋子的个数  
    int xIndex,yIndex;//当前刚下棋子的索引  
+   //just for  test github
      
    Image img;  
    Image shadows;  
