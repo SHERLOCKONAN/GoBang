@@ -4,16 +4,14 @@ import java.awt.event.*;
 import java.awt.*;  
   
 import javax.swing.*;  
-/* 
- 五子棋主框架類，程序啟動類 
- */  
+ 
 public class StartChessJFrame extends JFrame {  
   private ChessBoard chessBoard;  
   private JPanel toolbar;  
   private JButton startButton,backButton,exitButton;  
     
   private JMenuBar menuBar;  
-  private JMenu sysMenu;  
+  private JMenu sysMenu,testMenu;  
   private JMenuItem startMenuItem,exitMenuItem,backMenuItem;  
   //重新开始，退出，和悔棋菜单项  
   public StartChessJFrame(){  
@@ -28,7 +26,8 @@ public class StartChessJFrame extends JFrame {
         
       //创建和添加菜单  
       menuBar =new JMenuBar();//初始化菜单栏  
-      sysMenu=new JMenu("系统");//初始化菜单  
+      sysMenu=new JMenu("系统");//初始化菜单
+      testMenu = new JMenu("测试");
       //初始化菜单项  
       startMenuItem=new JMenuItem("重新开始");  
       exitMenuItem =new JMenuItem("退出");  
@@ -44,6 +43,7 @@ public class StartChessJFrame extends JFrame {
       backMenuItem.addActionListener(lis);  
       exitMenuItem.addActionListener(lis);  
       menuBar.add(sysMenu);//将系统菜单添加到菜单栏上  
+      menuBar.add(testMenu);
       setJMenuBar(menuBar);//将menuBar设置为菜单栏  
         
       toolbar=new JPanel();//工具面板实例化  

@@ -13,32 +13,44 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;  
 import java.awt.event.MouseMotionListener;  
 import java.awt.geom.Ellipse2D;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+import java.util.regex.Pattern;
 
+import javax.print.attribute.standard.PrinterMessageFromOperator;
 import javax.swing.*;  
 /** 
- * Îå×ÓÆå--ÆåÅÌÀà  
+ * äº”å­æ£‹--æ£‹ç›˜ç±»  
  */  
   
 public class ChessBoard extends JPanel implements MouseListener {  
-   public static final int MARGIN=30;//±ß¾à  
-   public static final int GRID_SPAN=35;//Íø¸ñ¼ä¾à  
-   public static final int ROWS=15;//ÆåÅÌĞĞÊı  
-   public static final int COLS=15;//ÆåÅÌÁĞÊı  
+   public static final int MARGIN=30;//è¾¹è·  
+   public static final int GRID_SPAN=35;//ç½‘æ ¼é—´è·  
+   public static final int ROWS=15;//æ£‹ç›˜è¡Œæ•°  
+   public static final int COLS=15;//æ£‹ç›˜åˆ—æ•°  
+   public static final int BLACK=2;
+   public static final int WHITE=1;
+   public static final int BLANK=0;
+   public static final int DEPTH=1;
+   int[][] chessBoard = new int[COLS+1][ROWS+1];
      
-   Point[] chessList=new Point[(ROWS+1)*(COLS+1)];//³õÊ¼Ã¿¸öÊı×éÔªËØÎªnull  
-   boolean isBlack=true;//Ä¬ÈÏ¿ªÊ¼ÊÇºÚÆåÏÈ  
-   boolean gameOver=false;//ÓÎÏ·ÊÇ·ñ½áÊø  
-   int chessCount;//µ±Ç°ÆåÅÌÆå×ÓµÄ¸öÊı  
-   int xIndex,yIndex;//µ±Ç°¸ÕÏÂÆå×ÓµÄË÷Òı  
+//   Point[] chessList=new Point[(ROWS+1)*(COLS+1)];//åˆå§‹æ¯ä¸ªæ•°ç»„å…ƒç´ ä¸ºnull  
+   List<Point> chessList = new ArrayList<Point>();
+   boolean isBlack=true;//é»˜è®¤å¼€å§‹æ˜¯é»‘æ£‹å…ˆ  
+   boolean gameOver=false;//æ¸¸æˆæ˜¯å¦ç»“æŸ  
+   int chessCount;//å½“å‰æ£‹ç›˜æ£‹å­çš„ä¸ªæ•°  
+   int xIndex,yIndex;//å½“å‰åˆšä¸‹æ£‹å­çš„ç´¢å¼• 
    //just for  test github
+   boolean flag=true;
+   boolean flag1=true;
      
    Image img;  
    Image shadows;  
    Color colortemp;  
    public ChessBoard(){  
         
-      // setBackground(Color.blue);//ÉèÖÃ±³¾°É«ÎªéÙ»ÆÉ«  
+      // setBackground(Color.blue);//è®¾ç½®èƒŒæ™¯è‰²ä¸ºæ©˜é»„è‰²  
        img=Toolkit.getDefaultToolkit().getImage("board.jpg");  
        shadows=Toolkit.getDefaultToolkit().getImage("shadows.jpg");  
        addMouseListener(this);  
@@ -49,14 +61,14 @@ public class ChessBoard extends JPanel implements MouseListener {
              
            public void mouseMoved(MouseEvent e){  
              int x1=(e.getX()-MARGIN+GRID_SPAN/2)/GRID_SPAN;  
-             //½«Êó±êµã»÷µÄ×ø±êÎ»ÖÃ×ª³ÉÍø¸ñË÷Òı  
+             //å°†é¼ æ ‡ç‚¹å‡»çš„åæ ‡ä½ç½®è½¬æˆç½‘æ ¼ç´¢å¼•  
              int y1=(e.getY()-MARGIN+GRID_SPAN/2)/GRID_SPAN;  
-             //ÓÎÏ·ÒÑ¾­½áÊø²»ÄÜÏÂ  
-             //ÂäÔÚÆåÅÌÍâ²»ÄÜÏÂ  
-             //x£¬yÎ»ÖÃÒÑ¾­ÓĞÆå×Ó´æÔÚ£¬²»ÄÜÏÂ  
+             //æ¸¸æˆå·²ç»ç»“æŸä¸èƒ½ä¸‹  
+             //è½åœ¨æ£‹ç›˜å¤–ä¸èƒ½ä¸‹  
+             //xï¼Œyä½ç½®å·²ç»æœ‰æ£‹å­å­˜åœ¨ï¼Œä¸èƒ½ä¸‹  
              if(x1<0||x1>ROWS||y1<0||y1>COLS||gameOver||findChess(x1,y1))  
                  setCursor(new Cursor(Cursor.DEFAULT_CURSOR));  
-             //ÉèÖÃ³ÉÄ¬ÈÏ×´Ì¬  
+             //è®¾ç½®æˆé»˜è®¤çŠ¶æ€  
              else setCursor(new Cursor(Cursor.HAND_CURSOR));  
                
            }  
@@ -65,38 +77,38 @@ public class ChessBoard extends JPanel implements MouseListener {
      
     
   
-//»æÖÆ  
+//ç»˜åˆ¶  
    public void paintComponent(Graphics g){  
        
-       super.paintComponent(g);//»­ÆåÅÌ  
+       super.paintComponent(g);//ç”»æ£‹ç›˜  
        
        int imgWidth= img.getWidth(this);  
-       int imgHeight=img.getHeight(this);//»ñµÃÍ¼Æ¬µÄ¿í¶ÈÓë¸ß¶È  
+       int imgHeight=img.getHeight(this);//è·å¾—å›¾ç‰‡çš„å®½åº¦ä¸é«˜åº¦  
        int FWidth=getWidth();  
-       int FHeight=getHeight();//»ñµÃ´°¿ÚµÄ¿í¶ÈÓë¸ß¶È  
+       int FHeight=getHeight();//è·å¾—çª—å£çš„å®½åº¦ä¸é«˜åº¦  
        int x=(FWidth-imgWidth)/2;  
        int y=(FHeight-imgHeight)/2;  
        g.drawImage(img, x, y, null);  
       
          
-       for(int i=0;i<=ROWS;i++){//»­ºáÏß  
+       for(int i=0;i<=ROWS;i++){//ç”»æ¨ªçº¿  
            g.drawLine(MARGIN, MARGIN+i*GRID_SPAN, MARGIN+COLS*GRID_SPAN, MARGIN+i*GRID_SPAN);  
        }  
-       for(int i=0;i<=COLS;i++){//»­ÊúÏß  
+       for(int i=0;i<=COLS;i++){//ç”»ç«–çº¿  
            g.drawLine(MARGIN+i*GRID_SPAN, MARGIN, MARGIN+i*GRID_SPAN, MARGIN+ROWS*GRID_SPAN);  
              
        }  
          
-       //»­Æå×Ó  
+       //ç”»æ£‹å­  
        for(int i=0;i<chessCount;i++){  
-           //Íø¸ñ½»²æµãx£¬y×ø±ê  
-           int xPos=chessList[i].getX()*GRID_SPAN+MARGIN;  
-           int yPos=chessList[i].getY()*GRID_SPAN+MARGIN;  
-           g.setColor(chessList[i].getColor());//ÉèÖÃÑÕÉ«  
+           //ç½‘æ ¼äº¤å‰ç‚¹xï¼Œyåæ ‡  
+           int xPos=chessList.get(i).getX()*GRID_SPAN+MARGIN;  
+           int yPos=chessList.get(i).getY()*GRID_SPAN+MARGIN;  
+           g.setColor(chessList.get(i).getColor());//è®¾ç½®é¢œè‰²  
           // g.fillOval(xPos-Point.DIAMETER/2, yPos-Point.DIAMETER/2,  
                            //Point.DIAMETER, Point.DIAMETER);  
            //g.drawImage(shadows, xPos-Point.DIAMETER/2, yPos-Point.DIAMETER/2, Point.DIAMETER, Point.DIAMETER, null);  
-           colortemp=chessList[i].getColor();  
+           colortemp=chessList.get(i).getColor();  
            if(colortemp==Color.black){  
                RadialGradientPaint paint = new RadialGradientPaint(xPos-Point.DIAMETER/2+25, yPos-Point.DIAMETER/2+10, 20, new float[]{0f, 1f}  
                , new Color[]{Color.WHITE, Color.BLACK});  
@@ -116,9 +128,9 @@ public class ChessBoard extends JPanel implements MouseListener {
            
            Ellipse2D e = new Ellipse2D.Float(xPos-Point.DIAMETER/2, yPos-Point.DIAMETER/2, 34, 35);  
            ((Graphics2D) g).fill(e);  
-           //±ê¼Ç×îºóÒ»¸öÆå×ÓµÄºì¾ØĞÎ¿ò  
+           //æ ‡è®°æœ€åä¸€ä¸ªæ£‹å­çš„çº¢çŸ©å½¢æ¡†  
              
-           if(i==chessCount-1){//Èç¹ûÊÇ×îºóÒ»¸öÆå×Ó  
+           if(i==chessCount-1){//å¦‚æœæ˜¯æœ€åä¸€ä¸ªæ£‹å­  
                g.setColor(Color.red);  
                g.drawRect(xPos-Point.DIAMETER/2, yPos-Point.DIAMETER/2,  
                            34, 35);  
@@ -126,189 +138,99 @@ public class ChessBoard extends JPanel implements MouseListener {
        }  
    }  
      
-   public void mousePressed(MouseEvent e){//Êó±êÔÚ×é¼şÉÏ°´ÏÂÊ±µ÷ÓÃ  
+   public void mousePressed(MouseEvent e){//é¼ æ ‡åœ¨ç»„ä»¶ä¸ŠæŒ‰ä¸‹æ—¶è°ƒç”¨  
          
-       //ÓÎÏ·½áÊøÊ±£¬²»ÔÙÄÜÏÂ  
+       //æ¸¸æˆç»“æŸæ—¶ï¼Œä¸å†èƒ½ä¸‹  
        if(gameOver) return;  
          
-       String colorName=isBlack?"ºÚÆå":"°×Æå";  
+       String colorName=isBlack?"é»‘æ£‹":"ç™½æ£‹";  
          
-       //½«Êó±êµã»÷µÄ×ø±êÎ»ÖÃ×ª»»³ÉÍø¸ñË÷Òı  
+       //å°†é¼ æ ‡ç‚¹å‡»çš„åæ ‡ä½ç½®è½¬æ¢æˆç½‘æ ¼ç´¢å¼•  
        xIndex=(e.getX()-MARGIN+GRID_SPAN/2)/GRID_SPAN;  
        yIndex=(e.getY()-MARGIN+GRID_SPAN/2)/GRID_SPAN;  
          
-       //ÂäÔÚÆåÅÌÍâ²»ÄÜÏÂ  
+       //è½åœ¨æ£‹ç›˜å¤–ä¸èƒ½ä¸‹  
        if(xIndex<0||xIndex>ROWS||yIndex<0||yIndex>COLS)  
            return;  
          
-       //Èç¹ûx£¬yÎ»ÖÃÒÑ¾­ÓĞÆå×Ó´æÔÚ£¬²»ÄÜÏÂ  
+       //å¦‚æœxï¼Œyä½ç½®å·²ç»æœ‰æ£‹å­å­˜åœ¨ï¼Œä¸èƒ½ä¸‹  
        if(findChess(xIndex,yIndex))return;  
          
-       //¿ÉÒÔ½øĞĞÊ±µÄ´¦Àí  
+       //å¯ä»¥è¿›è¡Œæ—¶çš„å¤„ç†  
        Point ch=new Point(xIndex,yIndex,isBlack?Color.black:Color.white);  
-       chessList[chessCount++]=ch;  
-/*       java.util.Random r=new java.util.Random();
-       int xIndex1=0,yIndex1=0;
-       int position,count=0;
-       do{
-    	   position=r.nextInt(4);
-    	   if(position == 0){
-    		   xIndex1=xIndex+1;
-    		   yIndex1=yIndex;
-    	   }
-    	   else if(position == 1){
-    		   xIndex1=xIndex;
-    		   yIndex1=yIndex+1;    		   
-    	   }
-    	   else if(position == 2){
-    		   xIndex1=xIndex-1;
-    		   yIndex1=yIndex;     		   
-    	   }
-    	   else if(position == 3){
-    		   xIndex1=xIndex;
-    		   yIndex1=yIndex-1;
-    	   }
-    	   else {
-    		   count++;
-    		   if(count>5){
-    			   xIndex1=r.nextInt(16);
-    			   yIndex1=r.nextInt(16);
-    		   }
-    	   }
-       }while(xIndex1<0||xIndex1>ROWS||yIndex1<0||yIndex1>COLS||gameOver||findChess(xIndex1,yIndex1));
-       Point ch1=new Point(xIndex1,yIndex1,isBlack?Color.white:Color.black);  
-       chessList[chessCount++]=ch1;*/
-        repaint();//Í¨ÖªÏµÍ³ÖØĞÂ»æÖÆ  
-        
-         
-       //Èç¹ûÊ¤³öÔò¸ø³öÌáÊ¾ĞÅÏ¢£¬²»ÄÜ¼ÌĞøÏÂÆå  
-         
-       if(isWin()){  
-           String msg=String.format("¹§Ï²£¬%sÓ®ÁË£¡", colorName);  
+       chessList.add(ch); 
+       chessCount++;
+       chessBoard[yIndex][xIndex]=BLACK;
+//	   drawChessBoard();
+//	   System.out.println(chessCount);
+	   isBlack=!isBlack;
+       repaint();//é€šçŸ¥ç³»ç»Ÿé‡æ–°ç»˜åˆ¶ 
+       if(isWin(xIndex,yIndex,Color.black)){  
+           String msg=String.format("æ­å–œï¼Œ%sèµ¢äº†ï¼", colorName);  
            JOptionPane.showMessageDialog(this, msg);  
            gameOver=true;  
-       }  
-       isBlack=!isBlack;  
+       }
+       else{
+    	   Point AIch = nextPoint(chessList, DEPTH);//ç”µè„‘æ‰¾åˆ°æœ€ä¼˜è½å­ç‚¹
+    	   chessList.add(AIch);
+    	   chessCount++;
+    	   chessBoard[AIch.getY()][AIch.getX()]=WHITE;
+    	   repaint();
+    	   if(isWin(AIch.getX(), AIch.getY(),Color.white)){
+               String msg=String.format("æ­å–œï¼Œ%sèµ¢äº†ï¼", "ç™½æ£‹");  
+               JOptionPane.showMessageDialog(this, msg);  
+               gameOver=true;    		   
+    	   }
+       }
+//	   drawChessBoard();
+       isBlack=!isBlack;
      }  
-   //¸²¸ÇmouseListenerµÄ·½·¨  
+   //è¦†ç›–mouseListenerçš„æ–¹æ³•  
    public void mouseClicked(MouseEvent e){  
-       //Êó±ê°´¼üÔÚ×é¼şÉÏµ¥»÷Ê±µ÷ÓÃ  
+       //é¼ æ ‡æŒ‰é”®åœ¨ç»„ä»¶ä¸Šå•å‡»æ—¶è°ƒç”¨  
    }  
      
    public void mouseEntered(MouseEvent e){  
-       //Êó±ê½øÈëµ½×é¼şÉÏÊ±µ÷ÓÃ  
+       //é¼ æ ‡è¿›å…¥åˆ°ç»„ä»¶ä¸Šæ—¶è°ƒç”¨  
    }  
    public void mouseExited(MouseEvent e){  
-       //Êó±êÀë¿ª×é¼şÊ±µ÷ÓÃ  
+       //é¼ æ ‡ç¦»å¼€ç»„ä»¶æ—¶è°ƒç”¨  
    }  
    public void mouseReleased(MouseEvent e){  
-       //Êó±ê°´Å¥ÔÚ×é¼şÉÏÊÍ·ÅÊ±µ÷ÓÃ  
+       //é¼ æ ‡æŒ‰é’®åœ¨ç»„ä»¶ä¸Šé‡Šæ”¾æ—¶è°ƒç”¨  
    }  
-   //ÔÚÆå×ÓÊı×éÖĞ²éÕÒÊÇ·ñÓĞË÷ÒıÎªx£¬yµÄÆå×Ó´æÔÚ  
+   //åœ¨æ£‹å­æ•°ç»„ä¸­æŸ¥æ‰¾æ˜¯å¦æœ‰ç´¢å¼•ä¸ºxï¼Œyçš„æ£‹å­å­˜åœ¨  
    private boolean findChess(int x,int y){  
-       for(Point c:chessList){  
+	   int length=chessList.size();
+       for(int i=0;i<length;i++){ 
+    	   Point c=chessList.get(i);
            if(c!=null&&c.getX()==x&&c.getY()==y)  
                return true;  
        }  
        return false;  
    }  
-     
-     
-   private boolean isWin(){  
-       int continueCount=1;//Á¬ĞøÆå×ÓµÄ¸öÊı  
-        
-       //ºáÏòÏòÎ÷Ñ°ÕÒ  
-       for(int x=xIndex-1;x>=0;x--){  
-           Color c=isBlack?Color.black:Color.white;  
-           if(getChess(x,yIndex,c)!=null){  
-               continueCount++;  
-           }else  
-               break;  
-       }  
-      //ºáÏòÏò¶«Ñ°ÕÒ  
-       for(int x=xIndex+1;x<=COLS;x++){  
-          Color c=isBlack?Color.black:Color.white;  
-          if(getChess(x,yIndex,c)!=null){  
-             continueCount++;  
-          }else  
-             break;  
-       }  
-       if(continueCount>=5){  
-             return true;  
-       }else   
-       continueCount=1;  
-         
-       //¼ÌĞøÁíÒ»ÖÖËÑË÷×İÏò  
-       //ÏòÉÏËÑË÷  
-       for(int y=yIndex-1;y>=0;y--){  
-           Color c=isBlack?Color.black:Color.white;  
-           if(getChess(xIndex,y,c)!=null){  
-               continueCount++;  
-           }else  
-               break;  
-       }  
-       //×İÏòÏòÏÂÑ°ÕÒ  
-       for(int y=yIndex+1;y<=ROWS;y++){  
-           Color c=isBlack?Color.black:Color.white;  
-           if(getChess(xIndex,y,c)!=null)  
-               continueCount++;  
-           else  
-              break;  
-         
-       }  
-       if(continueCount>=5)  
-           return true;  
-       else  
-           continueCount=1;  
-         
-         
-       //¼ÌĞøÁíÒ»ÖÖÇé¿öµÄËÑË÷£ºĞ±Ïò  
-       //¶«±±Ñ°ÕÒ  
-       for(int x=xIndex+1,y=yIndex-1;y>=0&&x<=COLS;x++,y--){  
-           Color c=isBlack?Color.black:Color.white;  
-           if(getChess(x,y,c)!=null){  
-               continueCount++;  
-           }  
-           else break;  
-       }  
-       //Î÷ÄÏÑ°ÕÒ  
-       for(int x=xIndex-1,y=yIndex+1;x>=0&&y<=ROWS;x--,y++){  
-           Color c=isBlack?Color.black:Color.white;  
-           if(getChess(x,y,c)!=null){  
-               continueCount++;  
-           }  
-           else break;  
-       }  
-       if(continueCount>=5)  
-           return true;  
-       else continueCount=1;  
-         
-         
-       //¼ÌĞøÁíÒ»ÖÖÇé¿öµÄËÑË÷£ºĞ±Ïò  
-       //Î÷±±Ñ°ÕÒ  
-       for(int x=xIndex-1,y=yIndex-1;x>=0&&y>=0;x--,y--){  
-           Color c=isBlack?Color.black:Color.white;  
-           if(getChess(x,y,c)!=null)  
-               continueCount++;  
-           else break;  
-       }  
-       //¶«ÄÏÑ°ÕÒ  
-       for(int x=xIndex+1,y=yIndex+1;x<=COLS&&y<=ROWS;x++,y++){  
-           Color c=isBlack?Color.black:Color.white;  
-           if(getChess(x,y,c)!=null)  
-               continueCount++;  
-           else break;  
-       }  
-       if(continueCount>=5)  
-           return true;  
-       else continueCount=1;  
-         
-       return false;  
-     }  
-     
-     
-   private Point getChess(int xIndex,int yIndex,Color color){  
-       for(Point p:chessList){  
+   private boolean isWin(int xIndex,int yIndex,Color color){
+	   Point point = new Point(xIndex, yIndex,color);
+	   int [][] s=generate(point, color);
+	   for(int i=0;i<4;i++){
+			String input ="";
+			for(int j = 0;j<9;j++)
+				input+=s[i][j];
+		   if(color == color.black){			   
+			   if(Pattern.matches(".*2{5}.*",input))
+				   return true;
+
+		   }else{
+			   if(Pattern.matches(".*1{5}.*", input))
+				   return true;
+		   }
+	   }
+	   return false;	   
+   }
+   private Point getChess(int xIndex,int yIndex,Color color){ 
+	   int length = chessList.size();
+       for(int i=0;i<length;i++){  
+    	   Point p =chessList.get(i);
            if(p!=null&&p.getX()==xIndex&&p.getY()==yIndex  
                    &&p.getColor()==color)  
                return p;  
@@ -318,38 +240,470 @@ public class ChessBoard extends JPanel implements MouseListener {
      
      
    public void restartGame(){  
-       //Çå³ıÆå×Ó  
-       for(int i=0;i<chessList.length;i++){  
-           chessList[i]=null;  
-       }  
-       //»Ö¸´ÓÎÏ·Ïà¹ØµÄ±äÁ¿Öµ  
+       //æ¸…é™¤æ£‹å­  
+	   chessList.clear();
+       //æ¢å¤æ¸¸æˆç›¸å…³çš„å˜é‡å€¼  
+       for(int i=0;i<=ROWS;i++){
+    	   for(int j=0;j<=ROWS;j++){
+    		   chessBoard[i][j]=BLANK;
+    	   }
+    	   
+       }
        isBlack=true;  
-       gameOver=false; //ÓÎÏ·ÊÇ·ñ½áÊø  
-       chessCount =0; //µ±Ç°ÆåÅÌÆå×Ó¸öÊı  
+       gameOver=false; //æ¸¸æˆæ˜¯å¦ç»“æŸ  
+       chessCount =0; //å½“å‰æ£‹ç›˜æ£‹å­ä¸ªæ•°
+     
        repaint();  
    }  
      
-   //»ÚÆå  
+   //æ‚”æ£‹  
    public void goback(){  
        if(chessCount==0)  
            return ;  
-       chessList[chessCount-1]=null;  
+
+       chessBoard[chessList.get(chessCount-1).getY()][chessList.get(chessCount-1).getX()]=BLANK;
+       chessList.remove(chessCount-1); 
+
+       chessBoard[chessList.get(chessCount-2).getY()][chessList.get(chessCount-2).getX()]=BLANK;
+       chessList.remove(chessCount-2);//ç”µè„‘æ— æ³•æ‚”æ£‹ï¼Œåªèƒ½æ‚”ä¸¤æ­¥
        chessCount--;  
+       chessCount--;
        if(chessCount>0){  
-           xIndex=chessList[chessCount-1].getX();  
-           yIndex=chessList[chessCount-1].getY();  
+           xIndex=chessList.get(chessCount-1).getX();  
+           yIndex=chessList.get(chessCount-1).getY();  
        }  
-       isBlack=!isBlack;  
        repaint();  
    }  
      
-   //¾ØĞÎDimension  
+   //çŸ©å½¢Dimension  
   
    public Dimension getPreferredSize(){  
        return new Dimension(MARGIN*2+GRID_SPAN*COLS,MARGIN*2  
                             +GRID_SPAN*ROWS);  
-   }  
-     
-     
-     
-}  
+   }
+/*   private Point nextPoint(List<Point> curArray,int depth){
+	   return new Point(5,5,Color.white);
+   }*/
+   private Point nextPoint(List<Point> curArray,int depth){
+	   List<Point> bestPoint =new ArrayList<Point>();
+	   List<Point> tempList=curArray;
+	   int bestValue =  Integer.MIN_VALUE;
+	   List<Point> searchList = this.getAllPointToSearch(tempList,Color.white);//è·å–å¯ä»¥æ·»åŠ çš„å­èŠ‚ç‚¹
+//	   System.out.println("length="+searchList.size());
+//	   List<TreeNode> subList = root.newsubNode(searchList);//æ ¹èŠ‚ç‚¹çš„æ‰€æœ‰å­èŠ‚ç‚¹
+	   int length =searchList.size();
+	   for(int i=0;i<length;i++){
+		   Point p =searchList.get(i);
+		   tempList.add(p);
+		   chessBoard[p.getY()][p.getX()]=WHITE;
+//		   System.out.println(tempList.size());
+		   int tempValue=min(tempList,depth-1,p,Integer.MAX_VALUE,Integer.MIN_VALUE);
+//		   System.out.println(p.getX()+"---"+p.getY()+"value="+tempValue);
+		   if(tempValue==bestValue){
+			   bestPoint.add(p);
+		   }
+		   else if(tempValue>bestValue){
+			   bestValue=tempValue;
+			   bestPoint.clear();
+			   bestPoint.add(p);			   
+		   }
+		   tempList.remove(p);
+		   chessBoard[p.getY()][p.getX()]=BLANK;
+	   }
+	   Random r = new Random () ;   
+	   Point result= bestPoint.get(r.nextInt(bestPoint.size()));//éšæœºé€‰å–ä¸€ä¸ªå…ƒç´ è¿”å›
+//	   System.out.println(result.getX()+"---"+result.getY());
+	   return result;
+	   
+   }
+   private int min(List<Point> curList,int depth,Point p,int alpha,int beta){
+	   List<Point> tempList=curList;
+	   int tempValue = judge(p,Color.white)+judge(p, Color.black);
+//	   int tempValue = evalute(tempList);
+	   if(depth<=0||isWin(p.getX(), p.getY(),Color.white)){
+		   return tempValue;
+	   }
+	   int best =Integer.MAX_VALUE;
+	   List<Point> searchList = getAllPointToSearch(tempList,Color.black);//è·å–å¯ä»¥æ·»åŠ çš„å­èŠ‚ç‚¹
+	   int length=searchList.size();
+	   for(int i=0;i<length;i++){
+		   Point T = searchList.get(i);
+		   tempList.add(T);
+		   chessBoard[T.getY()][T.getX()]=BLACK;
+		   tempValue = max(tempList,depth-1,T,best<alpha?best:alpha,beta);
+		   tempList.remove(T);
+		   chessBoard[T.getY()][T.getX()]=BLANK;
+		   if(tempValue<best){
+			   best=tempValue;
+		   }
+		   if(tempValue<beta){
+			   break;
+		   }
+	   }
+	   return best;
+   }
+   private int max(List<Point> curList,int depth,Point p,int alpha,int beta){
+	   List<Point> tempList = curList;
+
+	   int tempValue = judge(p,Color.white)+judge(p, Color.black);
+//	   int tempValue = evalute(tempList);
+	   if(depth<=0||isWin(p.getX(),p.getY(),Color.black)){
+		   return tempValue;
+	   }
+	   int best = Integer.MIN_VALUE;
+	   List<Point> searchList = getAllPointToSearch(tempList,Color.white);
+	   int length =searchList.size();
+	   for(int i=0;i<length;i++){
+		   Point T= searchList.get(i);
+		   tempList.add(T);
+		   chessBoard[T.getY()][T.getX()]=WHITE;
+		   tempValue=min(tempList, depth-1, T,alpha,best>beta?best:beta);
+		   tempList.remove(T);
+		   chessBoard[T.getY()][T.getX()]=BLANK;
+		   if(tempValue>best){
+			   best=tempValue; 
+		   }
+		   if(tempValue>alpha){
+			   break;
+		   }
+	   }
+	   return best;
+   }
+   public ArrayList<Point> getAllPointToSearch(List<Point> list,Color color)
+	{
+		int[][] chessBoardtemp = new int[COLS+1][ROWS+1];
+		for(int i = 0;i<=this.COLS;i++)
+	    	   for(int j = 0;j<=this.ROWS;j++) 
+	    		   chessBoardtemp[i][j] = chessBoard[i][j];
+		ArrayList<Point> list1 = new ArrayList<Point>();
+		int length=list.size();
+		for(int i=0;i<length;i++)
+		{
+			Point p=list.get(i);
+			int x = p.getX();
+			int y = p.getY();
+			
+			if(x-1>=0&&x-1<=ROWS&&
+			   y-1>=0&&y-1<=COLS&&
+			   chessBoardtemp[y-1][x-1]==0)
+			{
+				chessBoardtemp[y-1][x-1]=-1;
+				list1.add(new Point(x-1,y-1,color));
+				
+			}
+			if(x-2>=0&&x-2<=ROWS&&
+			   y-2>=0&&y-2<=COLS&&
+			   chessBoardtemp[y-2][x-2]==0)
+			{
+				chessBoardtemp[y-2][x-2]=-1;
+				list1.add(new Point(x-2,y-2,color));
+				
+			}
+			if(x+1>=0&&x+1<=ROWS&&
+			   y+1>=0&&y+1<=COLS&&
+			   chessBoardtemp[y+1][x+1]==0)
+			{
+				chessBoardtemp[y+1][x+1]=-1;
+				list1.add(new Point(x+1,y+1,color));
+				
+			}
+			if(x+2>=0&&x+2<=ROWS&&
+			   y+2>=0&&y+2<=COLS&&
+			   chessBoardtemp[y+2][x+2]==0)
+			{
+				chessBoardtemp[y+2][x+2]=-1;
+				list1.add(new Point(x+2,y+2,color));
+				
+			}
+			if(x>=0&&x<=ROWS&&
+			   y-1>=0&&y-1<=COLS&&
+			   chessBoardtemp[y-1][x]==0)
+			{
+				chessBoardtemp[y-1][x]=-1;
+				list1.add(new Point(x,y-1,color));
+				
+			}			
+			if(x>=0&&x<=ROWS&&
+			   y-2>=0&&y-2<=COLS&&
+			   chessBoardtemp[y-2][x]==0)
+			{
+				chessBoardtemp[y-2][x]=-1;
+				list1.add(new Point(x,y-2,color));
+				
+			}
+			if(x>=0&&x<=ROWS&&
+			   y+1>=0&&y+1<=COLS&&
+			   chessBoardtemp[y+1][x]==0)
+			{
+				chessBoardtemp[y+1][x]=-1;
+				list1.add(new Point(x,y+1,color));
+				
+			}
+			if(x>=0&&x<=ROWS&&
+			   y+2>=0&&y+2<=COLS&&
+			   chessBoardtemp[y+2][x]==0)
+			{
+				chessBoardtemp[y+2][x]=-1;
+				list1.add(new Point(x,y+2,color));
+				
+			}
+			if(x-1>=0&&x-1<=ROWS&&
+			   y>=0&&y<=COLS&&
+			   chessBoardtemp[y][x-1]==0)
+			{
+				chessBoardtemp[y][x-1]=-1;
+				list1.add(new Point(x-1,y,color));
+				
+			}
+			if(x-2>=0&&x-2<=ROWS&&
+			   y>=0&&y<=COLS&&
+			   chessBoardtemp[y][x-2]==0)
+			{
+				chessBoardtemp[y][x-2]=-1;
+				list1.add(new Point(x-2,y,color));
+				
+			}
+			if(x+1>=0&&x+1<=ROWS&&
+			   y>=0&&y<=COLS&&
+			   chessBoardtemp[y][x+1]==0)
+			{
+				chessBoardtemp[y][x+1]=-1;
+				list1.add(new Point(x+1,y,color));
+				
+			}
+			if(x+2>=0&&x+2<=ROWS&&
+			   y>=0&&y<=COLS&&
+			   chessBoardtemp[y][x+2]==0)
+			{
+				chessBoardtemp[y][x+2]=-1;
+				list1.add(new Point(x+2,y,color));
+				
+			}
+			if(x-1>=0&&x-1<=ROWS&&
+			   y+1>=0&&y+1<=COLS&&
+			   chessBoardtemp[y+1][x-1]==0)
+			{
+				chessBoardtemp[y+1][x-1]=-1;
+				list1.add(new Point(x-1,y+1,color));
+				
+			}
+			if(x-2>=0&&x-2<=ROWS&&
+			   y+2>=0&&y+2<=COLS&&
+			   chessBoardtemp[y+2][x-2]==0)
+			{
+				chessBoardtemp[y+2][x-2]=-1;
+				list1.add(new Point(x-2,y+2,color));
+				
+			}
+			if(x+1>=0&&x+1<=ROWS&&
+			   y-1>=0&&y-1<=COLS&&
+			   chessBoardtemp[y-1][x+1]==0)
+			{
+				chessBoardtemp[y-1][x+1]=-1;
+				list1.add(new Point(x+1,y-1,color));
+				
+			}
+			if(x+2>=0&&x+2<=ROWS&&
+			   y-2>=0&&y-2<=COLS&&
+			   chessBoardtemp[y-2][x+2]==0)
+			{
+				chessBoardtemp[y-2][x+2]=-1;
+				list1.add(new Point(x+2,y-2,color));
+				
+			}
+		}
+		return list1;
+	}
+   public int evalute(List<Point> list){
+	   int length =list.size();
+	   int count= 0;
+	   for(int i=0;i<length;i++){
+		   int [][] fourLine = new int [4][9];
+		   int whiteScore=0;
+		   int blackScore=0;
+		   if(list.get(i).getColor()==Color.black){
+			   fourLine=generate(list.get(i), Color.black);
+			   for(int j=0;j<4;j++){
+				   blackScore+=this.judgeLine(fourLine[j],Color.black);
+			   }   
+		   }
+		   else{
+			   fourLine=generate(list.get(i), Color.white);
+			   for(int j=0;j<4;j++){
+				   whiteScore+=this.judgeLine(fourLine[j],Color.white);
+			   } 			   
+		   }
+		   count=count+whiteScore-blackScore;
+	   }
+	   return count;
+   }
+   public int judge(Point p,Color color){
+  		int Score = 0;
+  		int[][] fourLine = new int[4][9];
+  		fourLine = this.generate(p,color);
+  		for(int i = 0;i<4;i++)
+  			Score+=this.judgeLine(fourLine[i],color);
+  		return Score;
+  	}
+	private int judgeLine(int[] is,Color color) {
+		// TODO Auto-generated method stub
+		String black5 = ".*2{5}.*";
+		int five = 100000;
+		String white5 = ".*1{5}.*";
+		String black4 = ".*02{4}0.*";
+		String white4 = ".*01{4}0.*";
+		int four = 10000;
+		String blackGO4 = ".*(12{4}0|02{4}1|32{4}0|02{4}3|20222|22022|22202).*";
+		String whiteGO4 = ".*(21{4}0|01{4}2|31{4}0|01{4}3|10111|11011|11101).*";
+		int gofour = 500;
+		String black3 = ".*02{3}0.*";
+		String white3 = ".*01{3}0.*";
+		int three = 100;
+		String blackjump3 = ".*022020.*|.*020220.*";
+		String whitejump3 = ".*011010.*|.*010110.*";
+		int jumpthree = 90;
+		String blacksleep3 = ".*((1|3)2{3}00|002{3}(1|3)|(1|3)22020|(1|3)20220|02022(1|3)|02202(1|3)).*";
+		String whitesleep3 = ".*((2|3)1{3}00|001{3}(2|3)|(2|3)11010|(2|3)10110|01011(2|3)|01101(2|3)).*";
+		int sleep3 = 50;
+		String black2 = ".*(002200|02020|020020).*";
+		String white2 = ".*(001100|01010|010010).*";
+		int two = 10;
+		String blacksleep2 = ".*((1|3)22000|00022(1|3)|(1|3)20200|00202(1|3)|(1|3)20020|02002(1|3)|20002).*";
+		String whitesleep2 = ".*((2|3)11000|00011(2|3)|(2|3)10100|00101(2|3)|(2|3)10010|01001(2|3)|10001).*";
+		int sleep2 = 2;
+		String input ="";
+		for(int i = 0;i<9;i++)
+			input+=is[i];
+//		System.out.println(input);	
+		if(color==Color.black)
+		{
+			
+			if(Pattern.matches(black5,input))
+				return five;
+			if(Pattern.matches(black4,input))
+				return four;
+			if(Pattern.matches(blackGO4,input))
+				return gofour;
+			if(Pattern.matches(black3,input))
+				return three;
+			if(Pattern.matches(blackjump3,input))
+				return jumpthree;
+			if(Pattern.matches(blacksleep3,input))
+				return sleep3;
+			if(Pattern.matches(black2,input))
+				return two;
+			if(Pattern.matches(blacksleep2,input))
+				return sleep2;
+		}
+		else if(color==Color.white)
+		{
+			if(Pattern.matches(white5,input))
+				return five;
+			if(Pattern.matches(white4,input))
+				return four;
+			if(Pattern.matches(whiteGO4,input))
+				return gofour;
+			if(Pattern.matches(white3,input))
+				return three;
+			if(Pattern.matches(whitejump3,input))
+				return jumpthree;
+			if(Pattern.matches(whitesleep3,input))
+				return sleep3;
+			if(Pattern.matches(white2,input))
+				return two;
+			if(Pattern.matches(whitesleep2,input))
+				return sleep2;
+		}
+		return 0;
+	}
+	private int[][] generate(Point p,Color color) {
+		
+		// TODO Auto-generated method stub
+		int x = p.getX();
+		int y = p.getY();
+		int[][] fourLine = new int[4][9];
+		int index = 0;
+		for(int j = -4;j<5;j++)//Ã—Ã³Ã‰ÃÃÃ¹Ã“Ã’ÃÃ‚
+		{
+			if(y+j<=COLS&&y+j>=0&&x+j<=ROWS&&x+j>=0)
+			{
+				if(chessBoard[y+j][x+j]==2)
+					fourLine[0][index++] = 2;
+				else if(chessBoard[y+j][x+j]==1)
+					fourLine[0][index++] = 1;
+				else 
+					fourLine[0][index++] = 0;
+					
+			}
+			else
+				fourLine[0][index++] = 3;
+				
+			}
+		index = 0;
+		
+		for(int j = 4;j>-5;j--)//Ã—Ã³ÃÃ‚ÃÃ¹Ã“Ã’Ã‰Ã
+		{
+			if(y+j<=COLS&&y+j>=0&&x-j<=ROWS&&x-j>=0)
+			{
+				if(chessBoard[y+j][x-j]==2)
+					fourLine[1][index++] = 2;
+				else if(chessBoard[y+j][x-j]==1)
+					fourLine[1][index++] = 1;
+				else 
+					fourLine[1][index++] = 0;
+					
+			}
+			else
+				fourLine[1][index++] = 3;
+			
+		}
+		index = 0;
+		
+		for(int i = 4;i>-5;i--)//ÃÃ‚ÃÃ¹Ã‰Ã
+		{
+			if(y+i<=COLS&&y+i>=0)
+			{
+				if(chessBoard[y+i][x]==2)
+					fourLine[2][index++] = 2;
+				else if(chessBoard[y+i][x]==1)
+					fourLine[2][index++] = 1;
+				else 
+					fourLine[2][index++] = 0;
+					
+			}
+			else
+				fourLine[2][index++] = 3;
+		}
+		index = 0;
+		
+		for(int i = -4;i<5;i++)//Ã—Ã³ÃÃ¹Ã“Ã’
+		{
+			if(x+i<=COLS&&x+i>=0)
+			{
+				if(chessBoard[y][x+i]==2)
+					fourLine[3][index++] = 2;
+				else if(chessBoard[y][x+i]==1)
+					fourLine[3][index++] = 1;
+				else 
+					fourLine[3][index++] = 0;
+					
+			}
+			else
+				fourLine[3][index++] = 3;
+		}	
+		int i = color==Color.black?2:1;
+		fourLine[0][4] = i;
+		fourLine[1][4] = i;
+		fourLine[2][4] = i;
+		fourLine[3][4] = i;
+		return fourLine;
+	} 
+	public void drawChessBoard(){
+		for(int i=0;i<ROWS;i++){
+			for(int j=0;j<ROWS;j++){
+				System.out.print(chessBoard[i][j]);
+			}
+			System.out.println("");
+		}
+	}
+} 
